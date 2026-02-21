@@ -10,7 +10,7 @@ CREATE PROCEDURE sp_crear_medico_validado(
     IN p_fac VARCHAR(10)
 )
 BEGIN
-    -- Manejador de errores del sistema (SQL)
+    
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         GET DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT;
@@ -24,7 +24,7 @@ BEGIN
     IF p_id = '' OR p_nombre = '' THEN
         SELECT 'VALIDACIÓN: El ID y el Nombre son obligatorios.' AS Mensaje;
     
-    -- VALIDACIÓN 2: Si el ID ya existe (Duplicado)
+    -- VALIDACIÓN 2: Si el ID ya existe 
     ELSEIF EXISTS (SELECT 1 FROM MEDICOSSS WHERE Medico_ID = p_id) THEN
         SELECT 'VALIDACIÓN: Error, el ID del médico ya se encuentra registrado.' AS Mensaje;
     
