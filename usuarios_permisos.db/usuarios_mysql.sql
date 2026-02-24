@@ -21,7 +21,7 @@ GRANT EXECUTE ON PROCEDURE Sistema_Medico.sp_listar_receta_cita TO 'medico_user'
 FLUSH PRIVILEGES;
 
 -- 3. RECEPCIONISTA (Enfocado en la parte administrativa)
--- Tipos: 1. SELECT (Médicos/Sedes), 2. INSERT (Citas), 3. UPDATE (Citas), 4. DELETE (Citas), 5. EXECUTE
+
 CREATE USER 'recepcionista_user'@'localhost' IDENTIFIED BY 'Recep2024*';
 
 -- Permisos sobre tablas

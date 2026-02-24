@@ -1,6 +1,3 @@
-Perfecto, wen. Aquí tienes tu **README completo actualizado**, integrando la sección de RBAC y quitando todos los emojis para mantenerlo formal y profesional:
-
----
 
 # Sistema de Gestión Médica (Backend MySQL)
 
