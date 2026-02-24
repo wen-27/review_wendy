@@ -116,3 +116,99 @@ BEGIN
         END IF;
 END //
 DELIMITER ;
+
+-- ===============================================
+-- MÉTODO REPAIR: Reparar tabla de citas
+-- ===============================================
+
+CREATE TABLE IF NOT EXISTS tbl_repair_log (
+    id_repair INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_tabla VARCHAR(100),
+    tipo_operacion VARCHAR(20),
+    resultado VARCHAR(50),
+    mensaje TEXT,
+    usuario_ejecuto VARCHAR(50),
+    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP PROCEDURE IF EXISTS sp_repair_cita;
+DELIMITER //
+CREATE PROCEDURE sp_repair_cita(IN p_usuario VARCHAR(50))
+BEGIN
+    DECLARE v_errno INT DEFAULT 0;
+    DECLARE v_msg TEXT DEFAULT '';
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
+        INSERT INTO logs_errores (nombre_tabla, nombre_procedimiento, codigo_error, mensaje_error)
+        VALUES ('cita', 'sp_repair_cita', v_errno, v_msg);
+        INSERT INTO tbl_repair_log (nombre_tabla, tipo_operacion, resultado, mensaje, usuario_ejecuto)
+        VALUES ('cita', 'REPAIR', 'ERROR', v_msg, p_usuario);
+        SELECT 'ERROR' AS Resultado, v_msg AS Mensaje;
+    END;
+    
+    SET @sql_repair = 'REPAIR TABLE cita';
+    PREPARE stmt FROM @sql_repair;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    
+    SET @sql_optimize = 'OPTIMIZE TABLE cita';
+    PREPARE stmt FROM @sql_optimize;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    
+    INSERT INTO tbl_repair_log (nombre_tabla, tipo_operacion, resultado, mensaje, usuario_ejecuto)
+    VALUES ('cita', 'REPAIR', 'EXITO', 'Tabla cita reparada y optimizada', p_usuario);
+    
+    SELECT 'EXITO' AS Resultado, 'Tabla cita reparada y optimizada' AS Mensaje;
+END //
+DELIMITER ;
+
+-- ===============================================
+-- MÉTODO EXECUTE: Ejecutar consulta dinámica
+-- ===============================================
+
+DROP PROCEDURE IF EXISTS sp_execute_cita;
+DELIMITER //
+CREATE PROCEDURE sp_execute_cita(
+    IN p_consulta TEXT,
+    IN p_tipo_usuario VARCHAR(20),
+    IN p_usuario VARCHAR(50)
+)
+BEGIN
+    DECLARE v_inicio DATETIME;
+    DECLARE v_fin DATETIME;
+    DECLARE v_tiempo INT;
+    DECLARE v_errno INT DEFAULT 0;
+    DECLARE v_msg TEXT DEFAULT '';
+    
+    SET v_inicio = NOW();
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET v_fin = NOW();
+        SET v_tiempo = TIMESTAMPDIFF(MICROSECOND, v_inicio, v_fin) / 1000;
+        
+        GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
+        INSERT INTO logs_errores (nombre_tabla, nombre_procedimiento, codigo_error, mensaje_error)
+        VALUES ('cita', 'sp_execute_cita', v_errno, v_msg);
+        
+        SELECT 'ERROR' AS Resultado, v_msg AS Mensaje, v_tiempo AS Tiempo_MS;
+    END;
+    
+    IF p_consulta LIKE '%DROP%' OR p_consulta LIKE '%TRUNCATE%' OR p_consulta LIKE '%ALTER%' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Consulta no permitida: comandos DDL no autorizados.';
+    END IF;
+    
+    SET @sql_exec = p_consulta;
+    PREPARE stmt FROM @sql_exec;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    
+    SET v_fin = NOW();
+    SET v_tiempo = TIMESTAMPDIFF(MICROSECOND, v_inicio, v_fin) / 1000;
+    
+    SELECT 'EXITO' AS Resultado, 'Consulta ejecutada' AS Mensaje, v_tiempo AS Tiempo_MS;
+END //
+DELIMITER ;
