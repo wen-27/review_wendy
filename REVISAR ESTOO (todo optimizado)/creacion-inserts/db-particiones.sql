@@ -59,3 +59,27 @@ CREATE TABLE receta_cita (
     PRIMARY KEY (cod_cita, medicamento),
     FOREIGN KEY (cod_cita) REFERENCES cita(Cod_Cita)
 );
+
+-- 8. tabla reporte_diario
+
+CREATE TABLE IF NOT EXISTS reporte_diario_productividad (
+    id_reporte INT AUTO_INCREMENT PRIMARY KEY,
+    fecha_atencion DATE,
+    sede_nombre VARCHAR(100),
+    medico_nombre VARCHAR(100),
+    cantidad_pacientes INT,
+    fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. tabla logs
+
+CREATE TABLE IF NOT EXISTS logs (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_tabla VARCHAR(50) NOT NULL,
+    nombre_objeto VARCHAR(50) NOT NULL,
+    tipo_objeto VARCHAR(20) NOT NULL,
+    operacion VARCHAR(50) NOT NULL,
+    codigo_error INT NOT NULL,
+    mensaje_error TEXT NOT NULL,
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
