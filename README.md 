@@ -78,3 +78,99 @@ El sistema implementa un modelo de **Control de Acceso Basado en Roles**, diseñ
 3. **Protección de la Integridad:** El uso de `DROP PROCEDURE IF EXISTS` y `DECLARE EXIT HANDLER` asegura que, ante un intento de operación no permitida o un error técnico, el sistema responda con un mensaje controlado y registre el evento en el Log de Auditoría sin exponer la estructura interna de la base de datos.
 
 ---
+
+## Particionamiento de Tablas
+
+El sistema utiliza **particionamiento** para optimizar el rendimiento y la gestión de datos en tablas críticas que experimentan alto volumen de consultas y crecimiento continuo.
+
+### Tablas Particionadas
+
+1. **Citas**
+   - **Estrategia:** Partición por rango basado en el año de la fecha de la cita (`YEAR(fecha_cita)`)
+   - **Justificación:** Las citas son el eje central del flujo clínico. El particionamiento por año permite:
+     - Búsqueda rápida de citas por periodo (consultas de productividad, estadísticas)
+     - Mantenimiento eficiente (eliminación de datos antiguos por partición)
+     - Mejor rendimiento en consultas de informes diarios y mensuales
+   - **Particiones:** `p2024`, `p2025`, `p2026`, `p_futuro`
+
+2. **Reporte Diario de Productividad**
+   - **Estrategia:** Partición por rango basado en la fecha de atención (`fecha_atencion`)
+   - **Justificación:** Este reporte se genera automáticamente cada día y acumula datos históricos. El particionamiento permite:
+     - Consultas rápidas por periodo para análisis de productividad
+     - Archivado eficiente de datos antiguos
+     - Optimización de consultas de tendencias y métricas
+   - **Particiones:** `p_old` (datos antiguos), `p2025_q1`, `p2025_q2`, `p_max`
+
+3. **Logs de Auditoría**
+   - **Estrategia:** Partición por rango basado en timestamp (`UNIX_TIMESTAMP(fecha_hora)`)
+   - **Justificación:** Los logs capturan errores y eventos del sistema de forma continua. El particionamiento permite:
+     - Búsqueda rápida de eventos por periodo
+     - Mantenimiento eficiente (rotación de logs antiguos)
+     - Mejor rendimiento en consultas de auditoría y troubleshooting
+   - **Particiones:** `p_inicio`, `p_actual`, `p_futuro`
+
+### Beneficios del Particionamiento
+
+- **Rendimiento:** Consultas más rápidas al acceder solo a particiones relevantes
+- **Mantenimiento:** Eliminación eficiente de datos antiguos sin afectar particiones activas
+- **Escalabilidad:** Mejor manejo de grandes volúmenes de datos
+- **Disponibilidad:** Operaciones de mantenimiento en particiones específicas sin bloquear todo el sistema
+
+---
+
+## Análisis de Funcionamiento de una Clínica Universitaria
+
+### Flujo de Atención Médica
+
+1. **Registro y Agendamiento**
+   - Los pacientes se registran en el sistema con datos básicos
+   - La recepción agenda citas considerando disponibilidad de médicos y sedes
+   - Las citas se almacenan con fecha, hora, médico asignado y sede
+
+2. **Atención Clínica**
+   - El médico accede al historial del paciente
+   - Realiza el diagnóstico y registra los hallazgos
+   - Prescribe medicamentos y genera la receta electrónica
+
+3. **Gestión Académica**
+   - Los médicos están vinculados a facultades específicas
+   - Las especialidades definen el campo de acción de cada profesional
+   - El sistema permite el seguimiento académico y la gestión de recursos
+
+4. **Reportes y Productividad**
+   - Sistema genera informes automáticos de productividad diaria
+   - Permite el seguimiento de métricas por médico, especialidad y sede
+   - Facilita la toma de decisiones basada en datos
+
+### Patrones Identificados
+
+1. **Acceso Frecuente por Fecha**
+   - Las consultas más comunes buscan información por rangos de fechas
+   - El particionamiento por fecha optimiza estas operaciones críticas
+
+2. **Búsqueda por Médico y Especialidad**
+   - Los pacientes buscan médicos por especialidad
+   - La administración consulta la carga de trabajo por médico
+   - Los índices en `id_medico` y `id_especialidad` optimizan estas búsquedas
+
+3. **Historial de Pacientes**
+   - Los médicos necesitan acceso rápido al historial clínico
+   - Las recetas y diagnósticos se asocian a las citas para mantener el historial
+   - Las vistas permiten una consulta simplificada del historial
+
+4. **Gestión de Inventarios Médicos**
+   - El seguimiento de medicamentos recetados permite la gestión de inventarios
+   - Las consultas por medicamento ayudan en la planificación de compras
+
+### Datos para Búsqueda desde la Vista del Médico
+
+Desde la vista del médico (`vw_medicos_jerarquia`), se pueden realizar búsquedas utilizando:
+
+1. **Facultad** - Para consultar médicos por dependencia académica
+2. **Especialidad** - Para buscar profesionales por área médica
+3. **Nombre del Médico** - Para consultas específicas de personal
+4. **Sede Hospitalaria** - Para gestionar la distribución geográfica del personal
+
+Estos datos permiten una gestión eficiente del recurso humano médico, facilitando la asignación de turnos, la cobertura de guardias y la planificación de servicios según la especialidad requerida.
+
+---
