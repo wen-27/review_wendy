@@ -1,85 +1,107 @@
 -- Creación de la base de datos
-CREATE DATABASE IF NOT EXISTS Sistema_Medico;
-USE Sistema_Medico;
+CREATE DATABASE IF NOT EXISTS sistema_medicos;
+USE sistema_medicos;
 
--- 1. Tabla Especialidades
+-- 1. Especialidades
 CREATE TABLE especialidades (
-    ID_especialida VARCHAR(10) PRIMARY KEY,
+    id_especialidad INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL
 );
 
--- 2. Tabla Facultad_nombres (Información del Decano y Facultad)
-CREATE TABLE facultad_nombres (
-    id_facultad_nombre VARCHAR(10) PRIMARY KEY,
-    facultad VARCHAR(100),
+-- 2. Facultades
+CREATE TABLE facultades (
+    id_facultad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_facultad VARCHAR(100) NOT NULL,
     decano VARCHAR(100)
 );
 
--- 3. Tabla Hospital_Sede
-CREATE TABLE Hospital_Sede (
-    id_hospital VARCHAR(10) PRIMARY KEY,
-    nombre VARCHAR(100),
+-- 3. Hospitales / Sedes
+CREATE TABLE sedes_hospital (
+    id_sede INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(255)
 );
 
--- 4. Tabla Diagnosticos
-CREATE TABLE Diagnosticos (
-    id_diagnostico VARCHAR(10) PRIMARY KEY,
-    nombre VARCHAR(100)
+-- 4. Diagnósticos
+CREATE TABLE diagnosticos (
+    id_diagnostico INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
 );
 
--- 5. Tabla MEDICOSSS (Relaciona especialidad y facultad)
-CREATE TABLE MEDICOSSS (
-    Medico_ID VARCHAR(10) PRIMARY KEY,
-    Nombre_Medico VARCHAR(100),
-    Especialidades VARCHAR(10),
-    Facultad_nombres VARCHAR(10),
-    FOREIGN KEY (Especialidades) REFERENCES especialidades(ID_especialida),
-    FOREIGN KEY (Facultad_nombres) REFERENCES facultad_nombres(id_facultad_nombre)
+-- 5. Pacientes 
+CREATE TABLE pacientes (
+    id_paciente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20)
 );
 
--- 6. Tabla Cita (Tabla central)
-CREATE TABLE cita (
-    Cod_Cita VARCHAR(10) PRIMARY KEY,
-    Cod_paciente VARCHAR(10),
-    Cod_medico VARCHAR(10),
-    Fecha_Cita DATE,
-    Diagnostico VARCHAR(10),
-    Hospital_Sede VARCHAR(10),
-    FOREIGN KEY (Cod_medico) REFERENCES MEDICOSSS(Medico_ID),
-    FOREIGN KEY (Diagnostico) REFERENCES Diagnosticos(id_diagnostico),
-    FOREIGN KEY (Hospital_Sede) REFERENCES Hospital_Sede(id_hospital)
+-- 6. Médicos
+CREATE TABLE medicos (
+    id_medico INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_medico VARCHAR(100) NOT NULL,
+    id_especialidad INT,
+    id_facultad INT,
+    FOREIGN KEY (id_especialidad) REFERENCES especialidades(id_especialidad),
+    FOREIGN KEY (id_facultad) REFERENCES facultades(id_facultad)
 );
 
--- 7. Tabla Receta_cita (Detalle de medicamentos por cita)
-CREATE TABLE receta_cita (
-    cod_cita VARCHAR(10),
+CREATE TABLE citas (
+    id_cita INT NOT NULL,
+    id_paciente INT NOT NULL,
+    id_medico INT NOT NULL,
+    fecha_cita DATETIME NOT NULL,
+    id_diagnostico INT,
+    id_sede INT,
+    PRIMARY KEY (id_cita, fecha_cita), 
+    INDEX (id_paciente),
+    INDEX (id_medico)
+) 
+PARTITION BY RANGE (YEAR(fecha_cita)) (
+    PARTITION p2024 VALUES LESS THAN (2025),
+    PARTITION p2025 VALUES LESS THAN (2026),
+    PARTITION p2026 VALUES LESS THAN (2027),
+    PARTITION p_futuro VALUES LESS THAN MAXVALUE
+);
+
+-- 8. Recetas
+CREATE TABLE recetas (
+    id_cita INT,
     medicamento VARCHAR(100),
     dosis VARCHAR(50),
-    PRIMARY KEY (cod_cita, medicamento),
-    FOREIGN KEY (cod_cita) REFERENCES cita(Cod_Cita)
+    PRIMARY KEY (id_cita, medicamento)
 );
 
--- 8. tabla reporte_diario
+-- 9. Reporte Diario 
 
-CREATE TABLE IF NOT EXISTS reporte_diario_productividad (
-    id_reporte INT AUTO_INCREMENT PRIMARY KEY,
-    fecha_atencion DATE,
-    sede_nombre VARCHAR(100),
-    medico_nombre VARCHAR(100),
+CREATE TABLE reporte_diario_productividad (
+    id_reporte INT NOT NULL,
+    fecha_atencion DATE NOT NULL,
+    id_sede INT,
+    id_medico INT,
     cantidad_pacientes INT,
-    fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP
+    fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_reporte, fecha_atencion)
+)
+PARTITION BY RANGE COLUMNS(fecha_atencion) (
+    PARTITION p_old VALUES LESS THAN ('2025-01-01'),
+    PARTITION p2025_q1 VALUES LESS THAN ('2025-04-01'),
+    PARTITION p2025_q2 VALUES LESS THAN ('2025-07-01'),
+    PARTITION p_max VALUES LESS THAN MAXVALUE
 );
 
--- 9. tabla logs
-
-CREATE TABLE IF NOT EXISTS logs (
-    id_log INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_tabla VARCHAR(50) NOT NULL,
-    nombre_objeto VARCHAR(50) NOT NULL,
-    tipo_objeto VARCHAR(20) NOT NULL,
-    operacion VARCHAR(50) NOT NULL,
-    codigo_error INT NOT NULL,
-    mensaje_error TEXT NOT NULL,
-    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- 10. Logs 
+CREATE TABLE logs (
+    id_log INT NOT NULL AUTO_INCREMENT,
+    nombre_tabla VARCHAR(50),
+    operacion VARCHAR(50),
+    codigo_error INT,
+    mensaje_error TEXT,
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_log, fecha_hora)
+)
+PARTITION BY RANGE (UNIX_TIMESTAMP(fecha_hora)) (
+    PARTITION p_inicio VALUES LESS THAN (UNIX_TIMESTAMP('2025-01-01 00:00:00')),
+    PARTITION p_actual VALUES LESS THAN (UNIX_TIMESTAMP('2026-01-01 00:00:00')),
+    PARTITION p_futuro VALUES LESS THAN MAXVALUE
 );

@@ -1,61 +1,70 @@
 -- Creación de la base de datos
-CREATE DATABASE IF NOT EXISTS Sistema_Medico;
-USE Sistema_Medico;
+CREATE DATABASE IF NOT EXISTS sistema_medico;
+USE sistema_medico;
 
--- 1. Tabla Especialidades
+-- 1. Especialidades
 CREATE TABLE especialidades (
-    ID_especialida VARCHAR(10) PRIMARY KEY,
+    id_especialidad INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL
 );
 
--- 2. Tabla Facultad_nombres (Información del Decano y Facultad)
-CREATE TABLE facultad_nombres (
-    id_facultad_nombre VARCHAR(10) PRIMARY KEY,
-    facultad VARCHAR(100),
+-- 2. Facultades
+CREATE TABLE facultades (
+    id_facultad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_facultad VARCHAR(100) NOT NULL,
     decano VARCHAR(100)
 );
 
--- 3. Tabla Hospital_Sede
-CREATE TABLE Hospital_Sede (
-    id_hospital VARCHAR(10) PRIMARY KEY,
-    nombre VARCHAR(100),
+-- 3. Hospitales / Sedes
+CREATE TABLE sedes_hospital (
+    id_sede INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(255)
 );
 
--- 4. Tabla Diagnosticos
-CREATE TABLE Diagnosticos (
-    id_diagnostico VARCHAR(10) PRIMARY KEY,
-    nombre VARCHAR(100)
+-- 4. Diagnósticos
+CREATE TABLE diagnosticos (
+    id_diagnostico INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
 );
 
--- 5. Tabla MEDICOSSS (Relaciona especialidad y facultad)
-CREATE TABLE MEDICOSSS (
-    Medico_ID VARCHAR(10) PRIMARY KEY,
-    Nombre_Medico VARCHAR(100),
-    Especialidades VARCHAR(10),
-    Facultad_nombres VARCHAR(10),
-    FOREIGN KEY (Especialidades) REFERENCES especialidades(ID_especialida),
-    FOREIGN KEY (Facultad_nombres) REFERENCES facultad_nombres(id_facultad_nombre)
+-- 5. Pacientes (Movida arriba para poder referenciarla)
+CREATE TABLE pacientes (
+    id_paciente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20)
 );
 
--- 6. Tabla Cita (Tabla central)
-CREATE TABLE cita (
-    Cod_Cita VARCHAR(10) PRIMARY KEY,
-    Cod_paciente VARCHAR(10),
-    Cod_medico VARCHAR(10),
-    Fecha_Cita DATE,
-    Diagnostico VARCHAR(10),
-    Hospital_Sede VARCHAR(10),
-    FOREIGN KEY (Cod_medico) REFERENCES MEDICOSSS(Medico_ID),
-    FOREIGN KEY (Diagnostico) REFERENCES Diagnosticos(id_diagnostico),
-    FOREIGN KEY (Hospital_Sede) REFERENCES Hospital_Sede(id_hospital)
+-- 6. Médicos
+CREATE TABLE medicos (
+    id_medico INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_medico VARCHAR(100) NOT NULL,
+    id_especialidad INT,
+    id_facultad INT,
+    FOREIGN KEY (id_especialidad) REFERENCES especialidades(id_especialidad),
+    FOREIGN KEY (id_facultad) REFERENCES facultades(id_facultad)
 );
 
--- 7. Tabla Receta_cita (Detalle de medicamentos por cita)
-CREATE TABLE receta_cita (
-    cod_cita VARCHAR(10),
+-- 7. Citas (Tabla central)
+CREATE TABLE citas (
+    id_cita INT AUTO_INCREMENT PRIMARY KEY,
+    id_paciente INT NOT NULL,
+    id_medico INT NOT NULL,
+    fecha_cita DATETIME NOT NULL, -- DATETIME es mejor para incluir la hora
+    id_diagnostico INT,
+    id_sede INT,
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
+    FOREIGN KEY (id_medico) REFERENCES medicos(id_medico),
+    FOREIGN KEY (id_diagnostico) REFERENCES diagnosticos(id_diagnostico),
+    FOREIGN KEY (id_sede) REFERENCES sedes_hospital(id_sede)
+);
+
+-- 8. Recetas (Detalle de medicamentos por cita)
+CREATE TABLE recetas (
+    id_cita INT,
     medicamento VARCHAR(100),
     dosis VARCHAR(50),
-    PRIMARY KEY (cod_cita, medicamento),
-    FOREIGN KEY (cod_cita) REFERENCES cita(Cod_Cita)
+    PRIMARY KEY (id_cita, medicamento),
+    FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
 );

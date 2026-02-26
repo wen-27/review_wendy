@@ -42,3 +42,8 @@ INSERT INTO receta_cita (cod_cita, medicamento, dosis) VALUES
 ('C-002', 'Amoxicilina', '875mg'),
 ('C-003', 'Aspirina', '100mg'),
 ('C-004', 'Ergotamina', '1mg');
+-- Insertamos los datos de tu captura
+INSERT INTO PACIENTES (Paciente_ID, Nombre_Paciente, apellido_Paciente, Telefono_Paciente) VALUES 
+('P-501', 'Juan', 'Rivas', '600-111'),
+('P-502', 'Ana', 'Soto', '600-222'),
+('P-503', 'Luis', 'Paz', '600-333');
