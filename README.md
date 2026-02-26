@@ -1,5 +1,5 @@
 
-# Sistema de Gestión Médica (Backend MySQL)
+# Sistema de Gestión Médica 
 
 Este repositorio contiene la arquitectura de base de datos para un sistema médico profesional, enfocado en la **integridad de datos**, el **control de errores centralizado**, la **seguridad basada en roles ** y la **automatización de procesos** mediante procedimientos almacenados y funciones.
 
